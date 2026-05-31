@@ -1,112 +1,99 @@
-# Panelix
+<p align="center">
+  <img src="Android/docs/panelix-icon.svg" width="120" height="120" alt="Panelix icon">
+</p>
 
-Panelix is a native, local-first comic reader project with Android and macOS apps maintained side by side.
+<h1 align="center">Panelix</h1>
+
+<p align="center">
+  A native, local-first comic reader project with Android now and macOS planned.
+</p>
+
+## Overview
+
+Panelix is organized as a monorepo: one Git repository at the project root contains all platform apps and shared project documentation.
+
+The Android app is the active implementation today. The macOS app folder is kept for the future desktop version and is not the current development focus yet.
 
 ## Apps
 
-| App | Path | Stack | Repository |
+| App | Path | Status | Stack |
 | --- | --- | --- | --- |
-| Android | [`Android/`](Android/) | Kotlin, Jetpack Compose, Room, Material 3 | `https://github.com/amiralibg/Panelix.git` |
-| macOS | [`macOS/`](macOS/) | Swift, SwiftUI, Xcode | `https://github.com/amiralibg/Panelix-Macos.git` |
+| Android | [`Android/`](Android/) | Active | Kotlin, Jetpack Compose, Room, Material 3 |
+| macOS | [`macOS/`](macOS/) | Planned / early scaffold | Swift, SwiftUI, Xcode |
 
-## Repository Strategy
+## Monorepo Structure
 
-This folder can be hosted in two common ways:
-
-1. **Monorepo**: one Git repository owns both app folders. This is the simplest setup if you want one GitHub repository for the full Panelix project.
-2. **Multi-repo with submodules**: the root repository tracks `Android/` and `macOS/` as separate Git repositories. This is best if you want each app to keep its own remote, issue tracker, releases, and commit history.
-
-Because `Android/` and `macOS/` already have their own `.git` folders and remotes, the safest multi-repo setup is Git submodules.
-
-## Recommended Multi-Repo Setup
-
-From the parent folder of this project, first make sure each app has no uncommitted work that you care about:
-
-```bash
-git -C Panelix/Android status
-git -C Panelix/macOS status
+```text
+Panelix/
+  README.md
+  LICENSE
+  .gitignore
+  Android/      Active Android app
+  macOS/        Planned macOS app
 ```
 
-Commit or stash app changes before continuing. Then create a root repository and add the existing app repositories as submodules:
+This repository intentionally uses one root `.git` folder instead of separate Git repositories inside each app folder. That keeps versioning, issues, documentation, and releases easier to manage while Panelix is developed as one product across platforms.
 
-```bash
-cd Panelix
+## Android App
 
-# Create the root repository.
-git init
+The Android app is a native comic reader that keeps the user's library local on-device. It uses the Android Storage Access Framework, so users choose comic folders explicitly and the app keeps persisted access to those folders.
 
-# Temporarily move the current app folders out of the way.
-cd ..
-mv Panelix/Android Panelix-Android-existing
-mv Panelix/macOS Panelix-macOS-existing
-cd Panelix
+Current Android features include:
 
-# Add the existing remotes back as submodules.
-git submodule add https://github.com/amiralibg/Panelix.git Android
-git submodule add https://github.com/amiralibg/Panelix-Macos.git macOS
+- Local-first comic library backed by Room/SQLite
+- Folder picking with persisted Android SAF permissions
+- Recursive folder scanning
+- Comic detection for PDF, CBZ, CBR, image folders, CBT, and CB7
+- Native reader with paging, scrolling, spread mode, reading direction, zoom, bookmarks, and page navigation
+- Library search, sorting, grid/list view, filters, and continue-reading support
+- Light, dark, and system theme preferences
 
-# Keep root-level documentation in the parent repository.
-git add .gitmodules README.md LICENSE
-git commit -m "Create Panelix multi-repo workspace"
-```
+## Android Build
 
-After confirming the cloned submodules contain everything you need, you can remove the temporary folders:
+Requirements:
 
-```bash
-cd ..
-rm -rf Panelix-Android-existing Panelix-macOS-existing
-```
+- Android Studio
+- JDK 17
+- Android SDK with the configured compile SDK
+- Gradle wrapper included in [`Android/`](Android/)
 
-To clone the root repository later with both apps:
-
-```bash
-git clone --recurse-submodules <root-repo-url>
-```
-
-If it was cloned without submodules:
-
-```bash
-git submodule update --init --recursive
-```
-
-## Working With Submodules
-
-Update all apps to their recorded commits:
-
-```bash
-git submodule update --init --recursive
-```
-
-Pull the latest code inside each app:
-
-```bash
-git -C Android pull
-git -C macOS pull
-```
-
-After updating an app, commit the new submodule pointer in the root repository:
-
-```bash
-git status
-git add Android macOS
-git commit -m "Update app submodule revisions"
-```
-
-## Build
-
-Android:
+Build debug APK:
 
 ```bash
 cd Android
 ./gradlew :app:assembleDebug
 ```
 
-macOS:
+Run unit tests:
 
 ```bash
-cd macOS
-open PanelixDesktop.xcodeproj
+cd Android
+./gradlew :app:testDebugUnitTest
 ```
+
+Install debug build on a connected device or emulator:
+
+```bash
+cd Android
+./gradlew :app:installDebug
+```
+
+## macOS App
+
+The macOS app is planned but not actively built yet. The [`macOS/`](macOS/) folder exists as the starting point for the future desktop version.
+
+## Git Notes
+
+This is now a monorepo. Use normal Git commands from the root folder:
+
+```bash
+git status
+git add .
+git commit -m "Describe your change"
+git push
+```
+
+The repository ignores macOS `.DS_Store` files through [`.gitignore`](.gitignore).
 
 ## License
 
