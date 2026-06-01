@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
+import com.amiralibg.panelix.data.AccentColor
 import com.amiralibg.panelix.data.AppPreferencesStore
 import com.amiralibg.panelix.data.BookmarkDao
 import com.amiralibg.panelix.data.BookmarkEntity
@@ -42,6 +43,7 @@ class LibraryRepository(
     val folders = folderDao.observeFolders()
     val comics = comicDao.observeComics()
     val continueReading = comicDao.observeContinueReading()
+    val readingProgress = progressDao.observeAll()
     val appPreferences = preferencesStore.preferences
 
     suspend fun addFolder(
@@ -119,6 +121,9 @@ class LibraryRepository(
     suspend fun setSortOption(value: SortOption) = preferencesStore.setSortOption(value)
     suspend fun setReaderLayoutMode(value: ReaderLayoutMode) = preferencesStore.setReaderLayoutMode(value)
     suspend fun setReadingDirection(value: ReadingDirection) = preferencesStore.setReadingDirection(value)
+    suspend fun setAccentColor(value: AccentColor) = preferencesStore.setAccentColor(value)
+    suspend fun setShowProgressOnCovers(value: Boolean) = preferencesStore.setShowProgressOnCovers(value)
+    suspend fun setKeepScreenAwake(value: Boolean) = preferencesStore.setKeepScreenAwake(value)
 
     private fun hasPermission(folderUri: String): Boolean {
         val uri = Uri.parse(folderUri)

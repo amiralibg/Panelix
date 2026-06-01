@@ -69,6 +69,9 @@ interface ReadingProgressDao {
     @Query("SELECT * FROM reading_progress WHERE comicId = :comicId")
     suspend fun get(comicId: String): ReadingProgressEntity?
 
+    @Query("SELECT * FROM reading_progress")
+    fun observeAll(): Flow<List<ReadingProgressEntity>>
+
     @Upsert
     suspend fun upsert(progress: ReadingProgressEntity)
 }

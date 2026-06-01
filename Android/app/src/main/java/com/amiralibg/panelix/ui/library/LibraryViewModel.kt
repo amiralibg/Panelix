@@ -7,6 +7,7 @@ import com.amiralibg.panelix.data.AppPreferences
 import com.amiralibg.panelix.data.ComicEntity
 import com.amiralibg.panelix.data.ComicFormat
 import com.amiralibg.panelix.data.LibraryViewMode
+import com.amiralibg.panelix.data.ReadingProgressEntity
 import com.amiralibg.panelix.data.SortOption
 import com.amiralibg.panelix.repository.LibraryRepository
 import com.amiralibg.panelix.scanner.ScanProgress
@@ -20,6 +21,7 @@ import kotlinx.coroutines.launch
 data class LibraryUiState(
     val comics: List<ComicEntity> = emptyList(),
     val continueReading: List<ComicEntity> = emptyList(),
+    val progressByComic: Map<String, ReadingProgressEntity> = emptyMap(),
     val preferences: AppPreferences = AppPreferences(),
     val query: String = "",
     val filter: ComicFormat? = null,
@@ -38,6 +40,20 @@ data class LibraryUiState(
                     SortOption.recentlyOpened -> seq.sortedByDescending { it.lastOpenedAt ?: 0L }
                 }
             }.toList()
+
+    val inProgressCount: Int
+        get() = progressByComic.values.count {
+            it.currentPage > 0 && (it.totalPages == 0 || it.currentPage < it.totalPages - 1)
+        }
+
+    fun progressFor(comic: ComicEntity): Float {
+        val p = progressByComic[comic.id] ?: return 0f
+        val total = if (p.totalPages > 0) p.totalPages else comic.pageCount ?: return 0f
+        if (total <= 0) return 0f
+        return (p.currentPage.toFloat() / total).coerceIn(0f, 1f)
+    }
+
+    fun currentPage(comic: ComicEntity): Int = (progressByComic[comic.id]?.currentPage ?: 0) + 1
 }
 
 data class ScanUiProgress(
@@ -60,6 +76,7 @@ class LibraryViewModel(private val repository: LibraryRepository) : ViewModel() 
     val state: StateFlow<LibraryUiState> = combine(
         repository.comics,
         repository.continueReading,
+        repository.readingProgress,
         repository.appPreferences,
         query,
         filter,
@@ -71,12 +88,13 @@ class LibraryViewModel(private val repository: LibraryRepository) : ViewModel() 
         LibraryUiState(
             comics = values[0] as List<ComicEntity>,
             continueReading = values[1] as List<ComicEntity>,
-            preferences = values[2] as AppPreferences,
-            query = values[3] as String,
-            filter = values[4] as ComicFormat?,
-            isScanning = values[5] as Boolean,
-            scanProgress = values[6] as ScanUiProgress?,
-            error = values[7] as String?,
+            progressByComic = (values[2] as List<ReadingProgressEntity>).associateBy { it.comicId },
+            preferences = values[3] as AppPreferences,
+            query = values[4] as String,
+            filter = values[5] as ComicFormat?,
+            isScanning = values[6] as Boolean,
+            scanProgress = values[7] as ScanUiProgress?,
+            error = values[8] as String?,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LibraryUiState())
 

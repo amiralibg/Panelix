@@ -65,6 +65,9 @@ fun PanelixApp(repository: LibraryRepository) {
                 onTheme = viewModel::setTheme,
                 onReaderMode = viewModel::setReaderMode,
                 onDirection = viewModel::setDirection,
+                onAccent = viewModel::setAccent,
+                onShowProgress = viewModel::setShowProgress,
+                onKeepAwake = viewModel::setKeepAwake,
             )
         }
         composable(

@@ -7,8 +7,9 @@ enum class ComicFormat { pdf, cbz, cbr, cbt, cb7, folder, unknown }
 enum class ReaderLayoutMode { vertical, horizontal, spread }
 enum class ReadingDirection { ltr, rtl }
 enum class ThemePreference { system, light, dark }
-enum class LibraryViewMode { grid, list }
+enum class LibraryViewMode { grid, list, compact }
 enum class SortOption { title, recentlyAdded, recentlyOpened }
+enum class AccentColor { coral, teal, violet, amber }
 
 @Entity(tableName = "folders")
 data class FolderEntity(
@@ -70,6 +71,9 @@ data class AppPreferences(
     val sortOption: SortOption = SortOption.recentlyAdded,
     val readerLayoutMode: ReaderLayoutMode = ReaderLayoutMode.horizontal,
     val readingDirection: ReadingDirection = ReadingDirection.ltr,
+    val accentColor: AccentColor = AccentColor.coral,
+    val showProgressOnCovers: Boolean = true,
+    val keepScreenAwake: Boolean = true,
     val hasCompletedOnboarding: Boolean = false,
 )
 

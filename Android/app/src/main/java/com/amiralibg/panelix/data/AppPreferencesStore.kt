@@ -16,16 +16,22 @@ class AppPreferencesStore(private val context: Context) {
         val Sort = stringPreferencesKey("sort")
         val ReaderMode = stringPreferencesKey("reader_mode")
         val Direction = stringPreferencesKey("direction")
+        val Accent = stringPreferencesKey("accent_color")
+        val ShowProgress = booleanPreferencesKey("show_progress_on_covers")
+        val KeepAwake = booleanPreferencesKey("keep_screen_awake")
         val Onboarding = booleanPreferencesKey("has_completed_onboarding")
     }
 
     val preferences = context.dataStore.data.map { prefs ->
         AppPreferences(
             themePreference = prefs[Keys.Theme]?.let(ThemePreference::valueOf) ?: ThemePreference.system,
-            libraryViewMode = prefs[Keys.ViewMode]?.let(LibraryViewMode::valueOf) ?: LibraryViewMode.grid,
+            libraryViewMode = prefs[Keys.ViewMode]?.let { runCatching { LibraryViewMode.valueOf(it) }.getOrNull() } ?: LibraryViewMode.grid,
             sortOption = prefs[Keys.Sort]?.let(SortOption::valueOf) ?: SortOption.recentlyAdded,
             readerLayoutMode = prefs[Keys.ReaderMode]?.let(ReaderLayoutMode::valueOf) ?: ReaderLayoutMode.horizontal,
             readingDirection = prefs[Keys.Direction]?.let(ReadingDirection::valueOf) ?: ReadingDirection.ltr,
+            accentColor = prefs[Keys.Accent]?.let { runCatching { AccentColor.valueOf(it) }.getOrNull() } ?: AccentColor.coral,
+            showProgressOnCovers = prefs[Keys.ShowProgress] ?: true,
+            keepScreenAwake = prefs[Keys.KeepAwake] ?: true,
             hasCompletedOnboarding = prefs[Keys.Onboarding] ?: false,
         )
     }
@@ -35,5 +41,8 @@ class AppPreferencesStore(private val context: Context) {
     suspend fun setSortOption(value: SortOption) = context.dataStore.edit { it[Keys.Sort] = value.name }
     suspend fun setReaderLayoutMode(value: ReaderLayoutMode) = context.dataStore.edit { it[Keys.ReaderMode] = value.name }
     suspend fun setReadingDirection(value: ReadingDirection) = context.dataStore.edit { it[Keys.Direction] = value.name }
+    suspend fun setAccentColor(value: AccentColor) = context.dataStore.edit { it[Keys.Accent] = value.name }
+    suspend fun setShowProgressOnCovers(value: Boolean) = context.dataStore.edit { it[Keys.ShowProgress] = value }
+    suspend fun setKeepScreenAwake(value: Boolean) = context.dataStore.edit { it[Keys.KeepAwake] = value }
     suspend fun setHasCompletedOnboarding(value: Boolean) = context.dataStore.edit { it[Keys.Onboarding] = value }
 }

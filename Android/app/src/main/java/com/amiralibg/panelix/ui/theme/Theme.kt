@@ -4,62 +4,130 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import com.amiralibg.panelix.data.AccentColor
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Ink80,
-    secondary = Steel80,
-    tertiary = Ember80,
-    background = Color(0xFF0E1111),
-    surface = Color(0xFF151919),
-    surfaceVariant = Color(0xFF293031),
-    primaryContainer = Color(0xFF0B4C4B),
-    secondaryContainer = Color(0xFF34434A),
+@Immutable
+data class PanelixPalette(
+    val bg: Color,
+    val surface: Color,
+    val surface2: Color,
+    val surfaceHi: Color,
+    val line: Color,
+    val lineHi: Color,
+    val text: Color,
+    val sub: Color,
+    val muted: Color,
+    val scrim: Color,
+    val accent: Color,
+    val onAccent: Color,
+    val isDark: Boolean,
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Ink40,
-    secondary = Steel40,
-    tertiary = Ember40,
-    background = Color(0xFFF7F9F8),
-    surface = Color(0xFFFFFFFF),
-    surfaceVariant = Color(0xFFE5ECEB),
-    primaryContainer = Color(0xFFCBEDEA),
-    secondaryContainer = Color(0xFFDCE5E9),
+val LocalPanelixPalette = staticCompositionLocalOf {
+    panelixPaletteFor(true, AccentColor.coral)
+}
+
+fun panelixPaletteFor(dark: Boolean, accent: AccentColor): PanelixPalette {
+    val accentColor = when (accent) {
+        AccentColor.coral -> PanelixAccents.coral
+        AccentColor.teal -> PanelixAccents.teal
+        AccentColor.violet -> PanelixAccents.violet
+        AccentColor.amber -> PanelixAccents.amber
+    }
+    return if (dark) PanelixPalette(
+        bg = PanelixDark.bg,
+        surface = PanelixDark.surface,
+        surface2 = PanelixDark.surface2,
+        surfaceHi = PanelixDark.surfaceHi,
+        line = PanelixDark.line,
+        lineHi = PanelixDark.lineHi,
+        text = PanelixDark.text,
+        sub = PanelixDark.sub,
+        muted = PanelixDark.muted,
+        scrim = PanelixDark.scrim,
+        accent = accentColor,
+        onAccent = OnAccent,
+        isDark = true,
+    ) else PanelixPalette(
+        bg = PanelixLight.bg,
+        surface = PanelixLight.surface,
+        surface2 = PanelixLight.surface2,
+        surfaceHi = PanelixLight.surfaceHi,
+        line = PanelixLight.line,
+        lineHi = PanelixLight.lineHi,
+        text = PanelixLight.text,
+        sub = PanelixLight.sub,
+        muted = PanelixLight.muted,
+        scrim = PanelixLight.scrim,
+        accent = accentColor,
+        onAccent = OnAccent,
+        isDark = false,
+    )
+}
+
+private fun darkScheme(palette: PanelixPalette) = darkColorScheme(
+    primary = palette.accent,
+    onPrimary = palette.onAccent,
+    primaryContainer = palette.accent,
+    onPrimaryContainer = palette.onAccent,
+    secondary = palette.accent,
+    onSecondary = palette.onAccent,
+    tertiary = palette.accent,
+    background = palette.bg,
+    onBackground = palette.text,
+    surface = palette.surface,
+    onSurface = palette.text,
+    surfaceVariant = palette.surface2,
+    onSurfaceVariant = palette.sub,
+    surfaceContainer = palette.surface,
+    surfaceContainerHigh = palette.surface2,
+    surfaceContainerHighest = palette.surfaceHi,
+    outline = palette.lineHi,
+    outlineVariant = palette.line,
+    scrim = palette.scrim,
+)
+
+private fun lightScheme(palette: PanelixPalette) = lightColorScheme(
+    primary = palette.accent,
+    onPrimary = palette.onAccent,
+    primaryContainer = palette.accent,
+    onPrimaryContainer = palette.onAccent,
+    secondary = palette.accent,
+    onSecondary = palette.onAccent,
+    tertiary = palette.accent,
+    background = palette.bg,
+    onBackground = palette.text,
+    surface = palette.surface,
+    onSurface = palette.text,
+    surfaceVariant = palette.surface2,
+    onSurfaceVariant = palette.sub,
+    surfaceContainer = palette.surface,
+    surfaceContainerHigh = palette.surface2,
+    surfaceContainerHighest = palette.surfaceHi,
+    outline = palette.lineHi,
+    outlineVariant = palette.line,
+    scrim = palette.scrim,
 )
 
 @Composable
 fun PanelixTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    accent: AccentColor = AccentColor.coral,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val palette = panelixPaletteFor(darkTheme, accent)
+    val colorScheme = if (darkTheme) darkScheme(palette) else lightScheme(palette)
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
-}
-
-
-@Preview(showBackground = true, backgroundColor = 0xFFF7F9F8)
-@Composable
-private fun PanelixThemePreview() {
-    PanelixTheme {
-        Surface(Modifier.padding(16.dp)) {
-            Text(
-                text = "Panelix theme",
-                modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.titleLarge,
-            )
-        }
+    CompositionLocalProvider(LocalPanelixPalette provides palette) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content,
+        )
     }
 }

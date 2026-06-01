@@ -1,6 +1,5 @@
 package com.amiralibg.panelix.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -9,17 +8,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,43 +31,121 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.amiralibg.panelix.data.AccentColor
 import com.amiralibg.panelix.data.ComicEntity
 import com.amiralibg.panelix.data.ComicFormat
+import com.amiralibg.panelix.ui.theme.LocalPanelixPalette
 import com.amiralibg.panelix.ui.theme.PanelixTheme
 
 @Composable
 fun ComicCard(
     comic: ComicEntity,
     modifier: Modifier = Modifier,
+    progress: Float = 0f,
+    showProgressBar: Boolean = true,
     compact: Boolean = false,
     onClick: () -> Unit,
 ) {
-    Surface(
-        modifier = modifier.clickable(enabled = comic.isAvailable, onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
-    ) {
-        if (compact) {
-            Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Cover(comic, Modifier.size(width = 68.dp, height = 98.dp))
-                ComicText(comic, Modifier.weight(1f))
+    val palette = LocalPanelixPalette.current
+    if (compact) {
+        Row(
+            modifier
+                .fillMaxWidth()
+                .clickable(enabled = comic.isAvailable, onClick = onClick)
+                .padding(vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            CoverArt(
+                comic = comic,
+                progress = progress,
+                showProgressBar = false,
+                modifier = Modifier.size(width = 52.dp, height = 74.dp),
+                radius = 9.dp,
+            )
+            Column(Modifier.weight(1f)) {
+                Text(
+                    comic.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = palette.text,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    secondaryLine(comic),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = palette.muted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (showProgressBar && progress > 0f) {
+                    Spacer(Modifier.height(8.dp))
+                    Box(
+                        Modifier
+                            .width(180.dp)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(palette.surfaceHi),
+                    ) {
+                        Box(
+                            Modifier
+                                .fillMaxSize(progress.coerceIn(0f, 1f))
+                                .background(palette.accent),
+                        )
+                    }
+                }
             }
-        } else {
-            Column(Modifier.padding(16.dp)) {
-                Cover(comic, Modifier.fillMaxWidth().aspectRatio(0.68f))
-                Spacer(Modifier.height(10.dp))
-                ComicText(comic)
-            }
+        }
+    } else {
+        Column(
+            modifier
+                .fillMaxWidth()
+                .clickable(enabled = comic.isAvailable, onClick = onClick),
+        ) {
+            CoverArt(
+                comic = comic,
+                progress = progress,
+                showProgressBar = showProgressBar,
+                modifier = Modifier.fillMaxWidth().aspectRatio(0.69f),
+                radius = 14.dp,
+            )
+            Spacer(Modifier.height(9.dp))
+            Text(
+                comic.title,
+                style = MaterialTheme.typography.titleSmall,
+                color = palette.text,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(3.dp))
+            Text(
+                metaLine(comic, progress),
+                style = MaterialTheme.typography.bodySmall,
+                color = palette.muted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
 
 @Composable
-private fun Cover(comic: ComicEntity, modifier: Modifier) {
+fun CoverArt(
+    comic: ComicEntity,
+    progress: Float,
+    showProgressBar: Boolean,
+    modifier: Modifier,
+    radius: androidx.compose.ui.unit.Dp,
+) {
+    val palette = LocalPanelixPalette.current
     val context = LocalContext.current
     Box(
-        modifier = modifier.clip(RoundedCornerShape(7.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .clip(RoundedCornerShape(radius))
+            .background(palette.surface2),
     ) {
         if (comic.coverUri != null) {
             AsyncImage(
@@ -88,84 +162,110 @@ private fun Cover(comic: ComicEntity, modifier: Modifier) {
             Box(
                 Modifier.matchParentSize().background(
                     Brush.verticalGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.surfaceVariant,
-                            MaterialTheme.colorScheme.secondaryContainer,
-                        )
-                    )
-                )
+                        listOf(palette.surface2, palette.surfaceHi),
+                    ),
+                ),
             )
-            Text(comic.format.name.uppercase(), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Box(Modifier.matchParentSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    comic.format.name.uppercase(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = palette.muted,
+                )
+            }
         }
+        Box(Modifier.matchParentSize().background(
+            Brush.verticalGradient(
+                0.55f to Color.Transparent,
+                1f to Color(0x80000000),
+            ),
+        ))
         Box(
-            Modifier.matchParentSize().background(
-                Brush.verticalGradient(
-                    0.68f to Color.Transparent,
-                    1f to Color.Black.copy(alpha = 0.28f),
+            Modifier
+                .padding(top = 8.dp, end = 8.dp)
+                .align(Alignment.TopEnd)
+                .clip(RoundedCornerShape(6.dp))
+                .background(Color(0xCC000000))
+                .padding(horizontal = 7.dp, vertical = 3.dp),
+        ) {
+            Text(
+                comic.format.name.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White,
+                fontWeight = FontWeight.ExtraBold,
+            )
+        }
+        if (showProgressBar && progress > 0f) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .align(Alignment.BottomStart)
+                    .background(Color(0x66000000)),
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxSize(progress.coerceIn(0f, 1f))
+                        .background(palette.accent),
                 )
-            )
-        )
-    }
-}
-
-@Composable
-private fun ComicText(comic: ComicEntity, modifier: Modifier = Modifier) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(comic.title, maxLines = 2, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
-        Text(
-            listOfNotNull(comic.format.name.uppercase(), comic.pageCount?.let { "$it pages" }).joinToString(" • "),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-        )
-        if (comic.parserMessage != null) {
-            AssistChip(
-                onClick = {},
-                label = { Text(comic.parserMessage, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                leadingIcon = { Icon(Icons.Outlined.Warning, null, Modifier.size(16.dp)) },
-            )
+            }
         }
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF7F9F8)
+private fun secondaryLine(comic: ComicEntity): String {
+    val parts = mutableListOf(comic.format.name.uppercase())
+    comic.pageCount?.let { parts += "$it pages" }
+    return parts.joinToString(" · ")
+}
+
+private fun metaLine(comic: ComicEntity, progress: Float): String {
+    val pages = comic.pageCount ?: 0
+    return if (progress > 0f && pages > 0) "${(progress * 100).toInt()}% · $pages pages"
+    else if (pages > 0) "$pages pages"
+    else comic.format.name.uppercase()
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF0D0E10)
 @Composable
 private fun ComicCardPreview() {
-    PanelixTheme {
+    PanelixTheme(darkTheme = true, accent = AccentColor.coral) {
         ComicCard(
             comic = previewComic(),
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(16.dp).width(170.dp),
+            progress = 0.34f,
             onClick = {},
         )
     }
 }
 
-@Preview(showBackground = true, backgroundColor = 0xFFF7F9F8, widthDp = 420)
+@Preview(showBackground = true, backgroundColor = 0xFF0D0E10, widthDp = 420)
 @Composable
 private fun ComicCardCompactPreview() {
-    PanelixTheme {
+    PanelixTheme(darkTheme = true, accent = AccentColor.coral) {
         ComicCard(
-            comic = previewComic(parserMessage = "Missing cover, using fallback"),
+            comic = previewComic(),
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             compact = true,
+            progress = 0.62f,
             onClick = {},
         )
     }
 }
 
-private fun previewComic(parserMessage: String? = null) = ComicEntity(
+private fun previewComic() = ComicEntity(
     id = "preview-comic",
     uri = "content://panelix/preview",
     folderUri = "content://panelix/library",
-    title = "The Clockwork Harbor",
-    format = ComicFormat.cbz,
+    title = "Batman: Hush",
+    format = ComicFormat.cbr,
     coverUri = null,
-    pageCount = 124,
+    pageCount = 291,
     fileSize = 48_000_000,
     addedAt = 0L,
     updatedAt = 0L,
     lastOpenedAt = 0L,
     isAvailable = true,
-    parserMessage = parserMessage,
+    parserMessage = null,
     sourceModifiedAt = null,
 )
