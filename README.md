@@ -5,21 +5,21 @@
 <h1 align="center">Panelix</h1>
 
 <p align="center">
-  A native, local-first comic reader project with Android now and macOS planned.
+  A native, local-first comic reader project for Android and macOS.
 </p>
 
 ## Overview
 
 Panelix is organized as a monorepo: one Git repository at the project root contains all platform apps and shared project documentation.
 
-The Android app is the active implementation today. The macOS app folder is kept for the future desktop version and is not the current development focus yet.
+The Android app is the mature implementation today, and the macOS folder now contains a native SwiftUI desktop implementation that mirrors the Android app capabilities where macOS-native APIs are available.
 
 ## Apps
 
 | App | Path | Status | Stack |
 | --- | --- | --- | --- |
 | Android | [`Android/`](Android/) | Active | Kotlin, Jetpack Compose, Room, Material 3 |
-| macOS | [`macOS/`](macOS/) | Planned / early scaffold | Swift, SwiftUI, Xcode |
+| macOS | [`macOS/`](macOS/) | Native desktop implementation started | Swift, SwiftUI, PDFKit, Xcode |
 
 ## Monorepo Structure
 
@@ -29,7 +29,7 @@ Panelix/
   LICENSE
   .gitignore
   Android/      Active Android app
-  macOS/        Planned macOS app
+  macOS/        Native macOS app
 ```
 
 This repository intentionally uses one root `.git` folder instead of separate Git repositories inside each app folder. That keeps versioning, issues, documentation, and releases easier to manage while Panelix is developed as one product across platforms.
@@ -80,7 +80,13 @@ cd Android
 
 ## macOS App
 
-The macOS app is planned but not actively built yet. The [`macOS/`](macOS/) folder exists as the starting point for the future desktop version.
+The macOS app in [`macOS/`](macOS/) is now a native SwiftUI desktop implementation. It supports local folder selection with security-scoped bookmarks, recursive library scanning, search/sort/filter controls, grid/list views, reading progress, bookmarks, reader preferences, PDF reading through PDFKit, CBZ/ZIP extraction through macOS archive services, CBR/RAR extraction through local tools such as `7zz` or `unar`, and image-folder reading. CBT/TAR and CB7/7z are detected and shown with unsupported-state messaging until native extractor integrations are added.
+
+Build the macOS app:
+
+```bash
+xcodebuild -project macOS/PanelixDesktop.xcodeproj -scheme PanelixDesktop -configuration Debug -derivedDataPath /tmp/PanelixDerivedData build
+```
 
 ## Git Notes
 
