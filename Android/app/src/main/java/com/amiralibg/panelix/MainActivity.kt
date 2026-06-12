@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
                 ThemePreference.dark -> true
             }
             PanelixTheme(darkTheme = dark, accent = preferences.accentColor) {
-                PanelixApp(graph.repository)
+                PanelixApp(graph.repository, graph.updateChecker)
             }
         }
     }

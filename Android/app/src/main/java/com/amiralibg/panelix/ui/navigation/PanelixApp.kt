@@ -1,6 +1,7 @@
 package com.amiralibg.panelix.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -17,6 +18,10 @@ import com.amiralibg.panelix.ui.reader.ReaderScreen
 import com.amiralibg.panelix.ui.reader.ReaderViewModel
 import com.amiralibg.panelix.ui.settings.SettingsScreen
 import com.amiralibg.panelix.ui.settings.SettingsViewModel
+import com.amiralibg.panelix.update.UpdateChecker
+import com.amiralibg.panelix.update.UpdateDialog
+import com.amiralibg.panelix.update.UpdateStatus
+import com.amiralibg.panelix.update.UpdateViewModel
 
 private object Routes {
     const val Onboarding = "onboarding"
@@ -27,11 +32,15 @@ private object Routes {
 }
 
 @Composable
-fun PanelixApp(repository: LibraryRepository) {
+fun PanelixApp(repository: LibraryRepository, updateChecker: UpdateChecker) {
     val navController = rememberNavController()
     val libraryViewModel: LibraryViewModel = viewModel(factory = LibraryViewModelFactory(repository))
     val libraryState by libraryViewModel.state.collectAsStateWithLifecycle()
     val start = if (libraryState.preferences.hasCompletedOnboarding) Routes.Library else Routes.Onboarding
+
+    val updateViewModel: UpdateViewModel = viewModel(factory = UpdateViewModelFactory(updateChecker))
+    val updateState by updateViewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { updateViewModel.autoCheckOnce() }
 
     NavHost(navController = navController, startDestination = start) {
         composable(Routes.Onboarding) {
@@ -68,6 +77,9 @@ fun PanelixApp(repository: LibraryRepository) {
                 onAccent = viewModel::setAccent,
                 onShowProgress = viewModel::setShowProgress,
                 onKeepAwake = viewModel::setKeepAwake,
+                currentVersion = updateViewModel.currentVersion,
+                updateState = updateState,
+                onCheckUpdate = { updateViewModel.check() },
             )
         }
         composable(
@@ -86,4 +98,13 @@ fun PanelixApp(repository: LibraryRepository) {
             )
         }
     }
+
+    UpdateDialog(
+        state = updateState,
+        onPrimary = {
+            if (updateState.status == UpdateStatus.ReadyToInstall) updateViewModel.install()
+            else updateViewModel.downloadAndInstall()
+        },
+        onDismiss = updateViewModel::dismiss,
+    )
 }

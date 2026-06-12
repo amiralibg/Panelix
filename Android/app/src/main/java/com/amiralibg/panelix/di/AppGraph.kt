@@ -11,9 +11,11 @@ import com.amiralibg.panelix.parser.ImageFolderComicParser
 import com.amiralibg.panelix.parser.PdfComicParser
 import com.amiralibg.panelix.repository.LibraryRepository
 import com.amiralibg.panelix.scanner.ComicScanner
+import com.amiralibg.panelix.update.UpdateChecker
 
 class AppGraph(context: Context) {
     private val appContext = context.applicationContext
+    val updateChecker = UpdateChecker(appContext)
     private val cache = ComicCacheManager(appContext)
         .also { it.trimCopiedSources(maxBytes = 512L * 1024L * 1024L) }
     private val database = Room.databaseBuilder(appContext, AppDatabase::class.java, "panelix.db").build()

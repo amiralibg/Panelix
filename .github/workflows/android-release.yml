@@ -23,30 +23,32 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build release APK
+      - name: Decode keystore and write signing config
+        working-directory: Android
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > panelix-release.jks
+          cat > keystore.properties <<EOF
+          storeFile=$(pwd)/panelix-release.jks
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      - name: Build signed release APK
         working-directory: Android
         run: |
           chmod +x gradlew
           ./gradlew :app:assembleRelease
 
-      - name: Sign APK
+      - name: Stage APK for release
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
+          APK=$(find Android/app/build/outputs/apk/release -name "*-release.apk" | head -1)
+          cp "$APK" "Panelix-${{ github.ref_name }}.apk"
 
-          APK=$(find Android/app/build/outputs/apk/release -name "*.apk" | head -1)
-
-          # Pick the newest apksigner from whichever build-tools version is installed
-          APKSIGNER=$(find "$ANDROID_SDK_ROOT/build-tools" -name "apksigner" | sort -rV | head -1)
-
-          "$APKSIGNER" sign \
-            --ks keystore.jks \
-            --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
-            --ks-pass "pass:${{ secrets.ANDROID_STORE_PASSWORD }}" \
-            --key-pass "pass:${{ secrets.ANDROID_KEY_PASSWORD }}" \
-            --out "Panelix-${{ github.ref_name }}.apk" \
-            "$APK"
-
-          rm keystore.jks
+      - name: Remove signing secrets
+        if: always()
+        working-directory: Android
+        run: rm -f panelix-release.jks keystore.properties
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

@@ -70,6 +70,8 @@ import com.amiralibg.panelix.ui.theme.LocalPanelixPalette
 import com.amiralibg.panelix.ui.theme.PanelixAccents
 import com.amiralibg.panelix.ui.theme.PanelixDisplayFont
 import com.amiralibg.panelix.ui.theme.PanelixTheme
+import com.amiralibg.panelix.update.UpdateStatus
+import com.amiralibg.panelix.update.UpdateUiState
 
 @Composable
 fun SettingsScreen(
@@ -84,6 +86,9 @@ fun SettingsScreen(
     onAccent: (AccentColor) -> Unit,
     onShowProgress: (Boolean) -> Unit,
     onKeepAwake: (Boolean) -> Unit,
+    currentVersion: String = "",
+    updateState: UpdateUiState = UpdateUiState(),
+    onCheckUpdate: () -> Unit = {},
 ) {
     val palette = LocalPanelixPalette.current
     var pendingDelete by remember { mutableStateOf<FolderEntity?>(null) }
@@ -196,6 +201,47 @@ fun SettingsScreen(
                             )
                         }
                         Text("Run", color = palette.accent, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+            item { Spacer(Modifier.height(22.dp)) }
+            item {
+                SettingsGroup("About") {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                enabled = updateState.status != UpdateStatus.Checking,
+                                onClick = onCheckUpdate,
+                            )
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Version", style = MaterialTheme.typography.titleSmall, color = palette.text)
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                if (currentVersion.isBlank()) "Tap to check for updates"
+                                else "$currentVersion · Tap to check for updates",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = palette.muted,
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            when (updateState.status) {
+                                UpdateStatus.Checking -> "Checking…"
+                                UpdateStatus.UpToDate -> "Up to date"
+                                UpdateStatus.Error -> "Check failed"
+                                UpdateStatus.Available,
+                                UpdateStatus.Downloading,
+                                UpdateStatus.ReadyToInstall -> "Update ready"
+                                UpdateStatus.Idle -> "Check"
+                            },
+                            color = palette.accent,
+                            fontWeight = FontWeight.Bold,
+                        )
                     }
                 }
             }
